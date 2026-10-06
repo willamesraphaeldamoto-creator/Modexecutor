@@ -10,9 +10,12 @@ Assistente de IA local para Android, pensado para executar tarefas no celular co
 - Ações sensíveis devem pedir confirmação.
 
 ## APK
-O workflow em `.github/workflows/jarvis-android.yml` compila o APK de debug e publica o artefato no GitHub Actions.
+O workflow em `.github/workflows/jarvis-mobile-ia.yml` compila o APK de debug e publica o artefato no GitHub Actions.
+
+## Modelo local
+O app inclui um botão para baixar o Qwen2.5 0.5B Instruct em GGUF para o armazenamento privado do aplicativo. O download do modelo não usa uma API de inferência.
 
 ## Logo
 `jarvis-mobile-ia/logo.svg`
 
-> Um modelo local grande não é armazenado no Git por causa do tamanho. A etapa de build pode baixar um modelo compatível de uma fonte autorizada quando essa integração for configurada.
+> O motor de inferência local ainda é uma etapa separada; o APK atual prepara o modelo e a interface para essa integração.
