@@ -10,7 +10,8 @@ import java.util.Locale;
 
 public class MainActivity extends Activity {
     private EditText command;
-    private TextView status;\n    private static final String MODEL_URL = "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_0.gguf";
+    private TextView status;
+    private static final String MODEL_URL = "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_0.gguf";
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -52,12 +53,44 @@ public class MainActivity extends Activity {
         accessibility.setText("ATIVAR CONTROLE DO CELULAR");
         accessibility.setOnClickListener(v ->
             startActivity(new Intent("android.settings.ACCESSIBILITY_SETTINGS")));
-        root.addView(accessibility);\n\n        Button model = new Button(this);\n        model.setText("BAIXAR MODELO LOCAL (≈429 MB)");\n        model.setOnClickListener(v -> downloadModel());\n        root.addView(model);
+        root.addView(accessibility);
+
+        Button model = new Button(this);
+        model.setText("BAIXAR MODELO LOCAL (≈429 MB)");
+        model.setOnClickListener(v -> downloadModel());
+        root.addView(model);
 
         setContentView(root);
     }
 
-    private void downloadModel() {\n        status.setText("Baixando o modelo local...");\n        new Thread(() -> {\n            java.io.File out = new java.io.File(getFilesDir(), "qwen2.5-0.5b-instruct-q4_0.gguf");\n            try {\n                java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(MODEL_URL).openConnection();\n                c.setConnectTimeout(15000); c.setReadTimeout(30000); c.connect();\n                if (c.getResponseCode() / 100 != 2) throw new java.io.IOException("HTTP " + c.getResponseCode());\n                try (java.io.InputStream in = c.getInputStream(); java.io.FileOutputStream fos = new java.io.FileOutputStream(out)) {\n                    byte[] buf = new byte[1024 * 64]; int n; long total = 0;\n                    while ((n = in.read(buf)) != -1) { fos.write(buf,0,n); total += n; }\n                }\n                runOnUiThread(() -> status.setText("Modelo local baixado. Arquivo salvo no armazenamento privado do JARVIS."));\n            } catch (Exception e) {\n                runOnUiThread(() -> status.setText("Falha no download: " + e.getMessage()));\n            }\n        }).start();\n    }\n\n    private void runCommand() {
+    private void downloadModel() {
+        status.setText("Baixando o modelo local...");
+        new Thread(() -> {
+            java.io.File out = new java.io.File(getFilesDir(), "qwen2.5-0.5b-instruct-q4_0.gguf");
+            try {
+                java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(MODEL_URL).openConnection();
+                c.setConnectTimeout(15000);
+                c.setReadTimeout(30000);
+                c.connect();
+                if (c.getResponseCode() / 100 != 2) {
+                    throw new java.io.IOException("HTTP " + c.getResponseCode());
+                }
+                try (java.io.InputStream in = c.getInputStream();
+                     java.io.FileOutputStream fos = new java.io.FileOutputStream(out)) {
+                    byte[] buf = new byte[1024 * 64];
+                    int n;
+                    while ((n = in.read(buf)) != -1) {
+                        fos.write(buf, 0, n);
+                    }
+                }
+                runOnUiThread(() -> status.setText("Modelo local baixado. Arquivo salvo no armazenamento privado do JARVIS."));
+            } catch (Exception e) {
+                runOnUiThread(() -> status.setText("Falha no download: " + e.getMessage()));
+            }
+        }).start();
+    }
+
+    private void runCommand() {
         String c = command.getText().toString().trim().toLowerCase(Locale.ROOT);
         if (c.isEmpty()) return;
         status.setText("Entendi: " + c + "\nVou pedir confirmação antes de ações sensíveis.");
