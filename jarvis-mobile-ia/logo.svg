@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+ <radialGradient id="g" cx="50%" cy="45%"><stop offset="0" stop-color="#53d8ff"/><stop offset=".45" stop-color="#168cff"/><stop offset="1" stop-color="#071525"/></radialGradient>
+ <linearGradient id="s" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".5" stop-color="#a8c4d8"/><stop offset="1" stop-color="#4b6b80"/></linearGradient>
+</defs>
+<rect width="512" height="512" rx="110" fill="#050b12"/>
+<circle cx="256" cy="205" r="145" fill="url(#g)" stroke="#1aaeff" stroke-width="7"/>
+<path d="M145 190 Q150 105 256 85 Q362 105 367 190 L340 300 Q305 345 256 355 Q207 345 172 300Z" fill="url(#s)" stroke="#d9f5ff" stroke-width="6"/>
+<path d="M175 183 Q194 130 256 121 Q318 130 337 183 L318 265 Q289 300 256 306 Q223 300 194 265Z" fill="#07121e"/>
+<ellipse cx="215" cy="205" rx="25" ry="13" fill="#36d9ff"/><ellipse cx="297" cy="205" rx="25" ry="13" fill="#36d9ff"/>
+<path d="M218 265 Q256 285 294 265" fill="none" stroke="#42cfff" stroke-width="8" stroke-linecap="round"/>
+<text x="256" y="405" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="52" font-weight="800" letter-spacing="4">JARVIS</text>
+<text x="256" y="445" text-anchor="middle" fill="#39bfff" font-family="Arial,sans-serif" font-size="22" font-weight="700" letter-spacing="5">MOBILE IA</text>
+</svg>
