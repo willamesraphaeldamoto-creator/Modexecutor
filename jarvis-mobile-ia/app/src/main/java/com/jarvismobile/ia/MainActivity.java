@@ -166,8 +166,6 @@ public class MainActivity extends Activity {
         }).start();
     }
 
-    @Override protected void onDestroy(){ if(tts!=null){tts.stop();tts.shutdown();} super.onDestroy(); }
-}
     private void askOpenRouter(String prompt,String key){
         addMessage("JARVIS está pensando…",false);
         new Thread(()->{try{
@@ -177,3 +175,6 @@ public class MainActivity extends Activity {
             runOnUiThread(()->{addMessage(answer,false);save("assistant",answer,"");speak(answer);});
         }catch(Exception e){runOnUiThread(()->addMessage("Erro na IA: "+e.getMessage(),false));}}).start();
     }
+
+    @Override protected void onDestroy(){ if(tts!=null){tts.stop();tts.shutdown();} super.onDestroy(); }
+}
