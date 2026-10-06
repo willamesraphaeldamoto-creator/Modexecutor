@@ -21,6 +21,9 @@ public class MainActivity extends Activity {
     private LinearLayout messages;
     private TextView status;
     private JarvisDbHelper db;
+    private Button apiButton;
+    private static final String OR_URL = "https://openrouter.ai/api/v1/chat/completions";
+    private static final String DEFAULT_MODEL = "nvidia/nemotron-3-nano-omni:free";
     private TextToSpeech tts;
     private static final int VOICE_REQ = 71;
     private static final int IMAGE_REQ = 72;
@@ -43,6 +46,7 @@ public class MainActivity extends Activity {
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(Color.rgb(18,18,18));
         LinearLayout top=new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL); top.setPadding(dp(16),dp(10),dp(16),dp(6));
         TextView title=tv("JARVIS",22,Color.WHITE); title.setTypeface(null,1); top.addView(title,new LinearLayout.LayoutParams(0,dp(52),1));
+        apiButton=new Button(this); apiButton.setText("⚙ IA / API"); apiButton.setOnClickListener(v->showApiConfig()); top.addView(apiButton,new LinearLayout.LayoutParams(dp(110),dp(50)));
         Button voice=new Button(this); voice.setText("🎙"); voice.setOnClickListener(v->startVoice()); top.addView(voice,new LinearLayout.LayoutParams(dp(58),dp(50)));
         Button image=new Button(this); image.setText("🖼"); image.setOnClickListener(v->pickImage()); top.addView(image,new LinearLayout.LayoutParams(dp(58),dp(50)));
         root.addView(top);
@@ -74,6 +78,40 @@ public class MainActivity extends Activity {
         if(messages.getChildCount()==0) addMessage("Olá! Eu sou o JARVIS. Você pode escrever, falar ou enviar uma imagem.",false);
     }
 
+    private void showApiConfig(){
+        LinearLayout box=new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setPadding(dp(8),dp(4),dp(8),0);
+        EditText key=new EditText(this); key.setHint("OPENROUTER_API_KEY"); key.setInputType(0x00000081); key.setText(db.get("openrouter_key")); box.addView(key);
+        EditText model=new EditText(this); model.setHint("Modelo"); model.setText(db.get("openrouter_model").isEmpty()?DEFAULT_MODEL:db.get("openrouter_model")); box.addView(model);
+        CheckBox enabled=new CheckBox(this); enabled.setText("Usar OpenRouter quando configurado"); enabled.setChecked("1".equals(db.get("openrouter_enabled"))); box.addView(enabled);
+        new AlertDialog.Builder(this).setTitle("Configurar IA").setMessage("A chave fica salva somente no banco privado do app. Não coloque sua chave no GitHub.")
+        .setView(box).setPositiveButton("Salvar", (d,w)->{db.put("openrouter_key",key.getText().toString().trim());db.put("openrouter_model",model.getText().toString().trim());db.put("openrouter_enabled",enabled.isChecked()?"1":"0"); status.setText("Configuração da IA salva no aparelho.");})
+        .setNeutralButton("Testar", (d,w)->testOpenRouter(key.getText().toString().trim(),model.getText().toString().trim())).setNegativeButton("Cancelar",null).show();
+    }
+
+    private void testOpenRouter(String key,String model){
+        if(key.isEmpty()){addMessage("Informe uma chave OpenRouter para testar.",false);return;}
+        new Thread(()->{
+            try{
+                String body="{\"model\":\""+json(model.isEmpty()?DEFAULT_MODEL:model)+"\",\"messages\":[{\"role\":\"user\",\"content\":\"Responda apenas: JARVIS online.\"}],\"max_tokens\":20}";
+                String out=http(body,key);
+                runOnUiThread(()->{addMessage("Teste da IA: "+out,false);speak(out);});
+            }catch(Exception e){runOnUiThread(()->addMessage("Falha no teste da IA: "+e.getMessage(),false));}
+        }).start();
+    }
+
+    private String json(String s){return s.replace("\\\\","\\\\\\\\").replace("\"","\\\"");}
+    private String http(String body,String key) throws Exception{
+        HttpURLConnection c=(HttpURLConnection)new URL(OR_URL).openConnection(); c.setRequestMethod("POST"); c.setConnectTimeout(15000); c.setReadTimeout(60000); c.setDoOutput(true);
+        c.setRequestProperty("Authorization","Bearer "+key); c.setRequestProperty("Content-Type","application/json"); c.setRequestProperty("X-Title","JARVIS Mobile IA");
+        try(OutputStream o=c.getOutputStream()){o.write(body.getBytes("UTF-8"));}
+        int code=c.getResponseCode(); InputStream in=code>=200&&code<300?c.getInputStream():c.getErrorStream(); ByteArrayOutputStream out=new ByteArrayOutputStream(); byte[] b=new byte[4096];int n;while((n=in.read(b))!=-1)out.write(b,0,n);c.disconnect();
+        String raw=out.toString("UTF-8"); if(code<200||code>=300)throw new IOException("HTTP "+code+" "+raw); return extract(raw,"content");
+    }
+    private String extract(String raw,String field){
+        String marker="\""+field+"\":\""; int p=raw.indexOf(marker); if(p<0)return raw; p+=marker.length(); StringBuilder s=new StringBuilder(); boolean esc=false;
+        for(int i=p;i<raw.length();i++){char ch=raw.charAt(i);if(esc){s.append(ch);esc=false;}else if(ch=='\\')esc=true;else if(ch=='\"')break;else s.append(ch);}return s.toString();
+    }
+
     private void sendText(){ String s=command.getText().toString().trim(); if(s.isEmpty())return; command.setText(""); addMessage(s,true); save("user",s,""); respond(s); }
     private void respond(String s){
         String l=s.toLowerCase(Locale.ROOT);
@@ -81,7 +119,7 @@ public class MainActivity extends Activity {
         if(l.contains("config")){ r="Abrindo as configurações."; startActivity(new Intent(Settings.ACTION_SETTINGS)); }
         else if(l.contains("wifi")){ r="Abrindo o Wi‑Fi."; startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS)); }
         else if(l.contains("modelo") && l.contains("baix")){ r="Vou iniciar o download do modelo local."; downloadModel(); }
-        else r="Recebi: “"+s+"”. O histórico está salvo neste aparelho. A próxima etapa é conectar o motor de inferência local ou o provedor OpenRouter que você configurar.";
+        else { String key=db.get("openrouter_key"); if("1".equals(db.get("openrouter_enabled")) && !key.isEmpty()){ askOpenRouter(s,key); return; } r="Recebi: “"+s+"”. O histórico está salvo neste aparelho. Configure uma IA em ⚙ IA / API para obter respostas reais."; }
         addMessage(r,false); save("assistant",r,""); speak(r);
     }
 
@@ -130,3 +168,12 @@ public class MainActivity extends Activity {
 
     @Override protected void onDestroy(){ if(tts!=null){tts.stop();tts.shutdown();} super.onDestroy(); }
 }
+    private void askOpenRouter(String prompt,String key){
+        addMessage("JARVIS está pensando…",false);
+        new Thread(()->{try{
+            String model=db.get("openrouter_model"); if(model.isEmpty())model=DEFAULT_MODEL;
+            String body="{\"model\":\""+json(model)+"\",\"messages\":[{\"role\":\"system\",\"content\":\"Você é JARVIS, assistente pessoal em português do Brasil. Seja útil, claro e seguro.\"},{\"role\":\"user\",\"content\":\""+json(prompt)+"\"}]}";
+            String answer=http(body,key);
+            runOnUiThread(()->{addMessage(answer,false);save("assistant",answer,"");speak(answer);});
+        }catch(Exception e){runOnUiThread(()->addMessage("Erro na IA: "+e.getMessage(),false));}}).start();
+    }
