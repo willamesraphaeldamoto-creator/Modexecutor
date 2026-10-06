@@ -13,6 +13,8 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5'
       - name: Build Kara APK
         working-directory: kara
         run: gradle :app:assembleDebug --no-daemon
