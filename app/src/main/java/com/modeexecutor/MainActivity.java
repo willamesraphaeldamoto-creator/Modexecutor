@@ -43,7 +43,7 @@ public class MainActivity extends Activity {
         key.setTextColor(Color.WHITE);
         key.setSingleLine(true);
         key.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        key.setText(getPreferences(MODE_PRIVATE).getString("openrouter_key",""));
+        key.setText(getSharedPreferences("ModExecutor",MODE_PRIVATE).getString("openrouter_key",""));
         root.addView(key,new LinearLayout.LayoutParams(-1,dp(55)));
 
         EditText model=new EditText(this);
@@ -51,13 +51,13 @@ public class MainActivity extends Activity {
         model.setHintTextColor(Color.rgb(115,105,130));
         model.setTextColor(Color.WHITE);
         model.setSingleLine(true);
-        model.setText(getPreferences(MODE_PRIVATE).getString("openrouter_model","openrouter/free"));
+        model.setText(getSharedPreferences("ModExecutor",MODE_PRIVATE).getString("openrouter_model","openrouter/free"));
         root.addView(model,new LinearLayout.LayoutParams(-1,dp(55)));
 
         Button save=new Button(this);
         save.setText("SALVAR CONFIGURAÇÃO");
         save.setOnClickListener(v->{
-            getPreferences(MODE_PRIVATE).edit()
+            getSharedPreferences("ModExecutor",MODE_PRIVATE).edit()
                 .putString("openrouter_key",key.getText().toString().trim())
                 .putString("openrouter_model",model.getText().toString().trim())
                 .apply();
