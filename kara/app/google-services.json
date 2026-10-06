@@ -1,0 +1,5 @@
+{
+  "project_info": {"project_number": "936335896969", "project_id": "kara-78103", "storage_bucket": "kara-78103.firebasestorage.app"},
+  "client": [{"client_info": {"mobilesdk_app_id": "1:936335896969:android:94b7863254db4188163158", "android_client_info": {"package_name": "com.kara.app"}}, "oauth_client": [], "api_key": [{"current_key": "AIzaSyB57C7VtPSCZd9w-CGmgMDKqSj8IwgkydY"}], "services": {"appinvite_service": {"other_platform_oauth_client": []}}}],
+  "configuration_version": "1"
+}
