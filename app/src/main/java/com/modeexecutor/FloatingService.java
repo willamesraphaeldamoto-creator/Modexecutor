@@ -8,6 +8,8 @@ import android.graphics.PixelFormat;
 import android.graphics.drawable.GradientDrawable;
 import android.os.CountDownTimer;
 import android.os.IBinder;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.view.View;
@@ -34,6 +36,7 @@ public class FloatingService extends Service {
     private TextView clock,title,output;
     private EditText input;
     private ExecutorService net=Executors.newSingleThreadExecutor();
+    private Handler mainHandler=new Handler(Looper.getMainLooper());
 
     private int dp(int v){return (int)(v*getResources().getDisplayMetrics().density+.5f);}
     private GradientDrawable bg(int c,int r){GradientDrawable g=new GradientDrawable();g.setColor(c);g.setCornerRadius(dp(r));return g;}
@@ -141,8 +144,8 @@ public class FloatingService extends Service {
                 br.close();
                 JSONObject res=new JSONObject(sb.toString());
                 String answer=res.getJSONArray("choices").getJSONObject(0).getJSONObject("message").optString("content","Sem resposta.");
-                runOnUiThread(()->output.setText(answer));
-            }catch(Exception e){runOnUiThread(()->output.setText("Erro OpenRouter: "+e.getMessage()));}
+                mainHandler.post(()->output.setText(answer));
+            }catch(Exception e){mainHandler.post(()->output.setText("Erro OpenRouter: "+e.getMessage()));}
         });
     }
 
