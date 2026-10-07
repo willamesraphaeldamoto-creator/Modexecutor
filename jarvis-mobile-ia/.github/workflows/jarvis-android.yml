@@ -1,53 +1,33 @@
 name: JARVIS Mobile IA - Android APK
-
 on:
   workflow_dispatch:
   push:
     paths:
       - 'jarvis-mobile-ia/**'
-      - 'jarvis-mobile-ia/.github/workflows/jarvis-android.yml'
-
 permissions:
   contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: jarvis-mobile-ia
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Java 17
-        uses: actions/setup-java@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
           cache: gradle
-
-      - name: Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK 34
-        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
-      - name: Gradle 8.7
-        uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
         with:
-          gradle-version: '8.7'
-
-      - name: Verify Gradle
-        run: gradle --version
-
-      - name: Build APK
-        run: gradle clean assembleDebug --no-daemon --stacktrace
-
-      - name: Publish APK
-        uses: actions/upload-artifact@v4
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - run: gradle clean assembleDebug --no-daemon --stacktrace
+      - uses: actions/upload-artifact@v4
         with:
           name: jarvis-mobile-ia-debug
-          path: jarvis-mobile-ia/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
