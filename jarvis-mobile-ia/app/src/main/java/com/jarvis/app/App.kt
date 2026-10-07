@@ -5,6 +5,7 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.app.*
 import android.content.*
+import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.graphics.*
 import android.hardware.display.DisplayManager
@@ -14,14 +15,17 @@ import android.media.projection.MediaProjectionManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.*
+import android.content.pm.ServiceInfo
 import android.provider.AlarmClock
 import android.provider.ContactsContract
 import android.provider.Settings
+import android.net.Uri
 import android.service.voice.*
 import android.speech.*
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.*
