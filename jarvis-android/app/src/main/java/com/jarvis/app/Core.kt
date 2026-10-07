@@ -20,19 +20,19 @@ object Rules{
  private fun a(type:String,vararg kv:Pair<String,Any>)=JSONObject().put("type",type).also{o->kv.forEach{o.put(it.first,it.second)}};private fun arr(vararg x:JSONObject)=JSONArray().also{y->x.forEach{y.put(it)}}
  fun match(raw:String):Pair<String,JSONArray>?{
   val t=raw.lowercase().trim();fun has(vararg s:String)=s.any{t.contains(it)}
-  if(t in setOf("oi","olá","ola","bom dia","boa tarde","boa noite"))return"Olá. Como posso ajudar?" to JSONArray()
-  if(has("voltar"))return"" to arr(a("back"));if(has("ir para casa","tela inicial","home"))return"" to arr(a("home"));if(has("aplicativos recentes","recentes"))return"" to arr(a("recents"));if(has("notificações","notificacoes"))return"" to arr(a("notifications"))
-  if(has("lanterna","flash")&&!has("desligar"))return"Lanterna." to arr(a("flash","on" to true));if(has("desligar lanterna"))return"Lanterna desligada." to arr(a("flash","on" to false))
-  if(has("aumentar volume","sobe o volume","volume mais"))return"" to arr(a("volume","dir" to "up"));if(has("diminuir volume","abaixar volume","volume menos"))return"" to arr(a("volume","dir" to "down"))
-  if(has("próxima música","proxima musica","próxima faixa"))return"" to arr(a("media","key" to "next"));if(has("música anterior","musica anterior"))return"" to arr(a("media","key" to "prev"))
-  Regex("""(?:abra|abrir|abre|inicie|iniciar)\\s+(?:o\\s+|a\\s+)?(.+)""").find(t)?.let{return"Abrindo." to arr(a("open_app","app" to it.groupValues[1]))}
-  Regex("""(?:pesquise|pesquisar|pesquisa|buscar|busque)\\s+(?:por\\s+|sobre\\s+)?(.+)""").find(t)?.let{return"Pesquisando." to arr(a("search","q" to it.groupValues[1]))}
-  Regex("""(?:clique|clicar|toque|tocar)\\s+(?:em\\s+)?(.+)""").find(t)?.let{return"Clicando." to arr(a("click","text" to it.groupValues[1]))}
-  Regex("""(?:digite|escreva)\\s+(.+)""").find(t)?.let{return"Digitando." to arr(a("type","text" to it.groupValues[1]))}
-  if(has("role para baixo","rolar para baixo","desça a tela"))return"" to arr(a("swipe","down" to true));if(has("role para cima","rolar para cima","suba a tela"))return"" to arr(a("swipe","down" to false))
-  Regex("""(?:abra o site|abrir site|acesse)\\s+(.+)""").find(t)?.let{val x=it.groupValues[1];val u=if(x.startsWith("http"))x else "https://"+x;return"Abrindo o site." to arr(a("url","url" to u))}
-  Regex("""(?:crie|criar|gere|gerar)\\s+(?:um\\s+)?site\\s+(.+)""").find(t)?.let{return"Vou preparar um site web para você." to arr(a("make_site","prompt" to it.groupValues[1]))}
-  Regex("""(?:abra|abrir)\\s+(?:a\\s+)?loja\\s+(.+)""").find(t)?.let{return"Abrindo a loja para procurar o app." to arr(a("store","q" to it.groupValues[1]))}
+  if(t in setOf("oi","olá","ola","bom dia","boa tarde","boa noite"))return "Olá. Como posso ajudar?" to JSONArray()
+  if(has("voltar"))return "" to arr(a("back"));if(has("ir para casa","tela inicial","home"))return "" to arr(a("home"));if(has("aplicativos recentes","recentes"))return "" to arr(a("recents"));if(has("notificações","notificacoes"))return "" to arr(a("notifications"))
+  if(has("lanterna","flash")&&!has("desligar"))return "Lanterna." to arr(a("flash","on" to true));if(has("desligar lanterna"))return "Lanterna desligada." to arr(a("flash","on" to false))
+  if(has("aumentar volume","sobe o volume","volume mais"))return "" to arr(a("volume","dir" to "up"));if(has("diminuir volume","abaixar volume","volume menos"))return "" to arr(a("volume","dir" to "down"))
+  if(has("próxima música","proxima musica","próxima faixa"))return "" to arr(a("media","key" to "next"));if(has("música anterior","musica anterior"))return "" to arr(a("media","key" to "prev"))
+  Regex("""(?:abra|abrir|abre|inicie|iniciar)\\s+(?:o\\s+|a\\s+)?(.+)""").find(t)?.let{return "Abrindo." to arr(a("open_app","app" to it.groupValues[1]))}
+  Regex("""(?:pesquise|pesquisar|pesquisa|buscar|busque)\\s+(?:por\\s+|sobre\\s+)?(.+)""").find(t)?.let{return "Pesquisando." to arr(a("search","q" to it.groupValues[1]))}
+  Regex("""(?:clique|clicar|toque|tocar)\\s+(?:em\\s+)?(.+)""").find(t)?.let{return "Clicando." to arr(a("click","text" to it.groupValues[1]))}
+  Regex("""(?:digite|escreva)\\s+(.+)""").find(t)?.let{return "Digitando." to arr(a("type","text" to it.groupValues[1]))}
+  if(has("role para baixo","rolar para baixo","desça a tela"))return "" to arr(a("swipe","down" to true));if(has("role para cima","rolar para cima","suba a tela"))return "" to arr(a("swipe","down" to false))
+  Regex("""(?:abra o site|abrir site|acesse)\\s+(.+)""").find(t)?.let{val x=it.groupValues[1];val u=if(x.startsWith("http"))x else "https://"+x;return "Abrindo o site." to arr(a("url","url" to u))}
+  Regex("""(?:crie|criar|gere|gerar)\\s+(?:um\\s+)?site\\s+(.+)""").find(t)?.let{return "Vou preparar um site web para você." to arr(a("make_site","prompt" to it.groupValues[1]))}
+  Regex("""(?:abra|abrir)\\s+(?:a\\s+)?loja\\s+(.+)""").find(t)?.let{return "Abrindo a loja para procurar o app." to arr(a("store","q" to it.groupValues[1]))}
   return null
  }
 }
@@ -49,8 +49,8 @@ object Actions{
    "open_app"->openApp(c,a.optString("app"));"search"->{go(c,Intent(Intent.ACTION_VIEW,Uri.parse("https://www.google.com/search?q="+Uri.encode(a.optString("q")))));""}
    "url"->{go(c,Intent(Intent.ACTION_VIEW,Uri.parse(a.optString("url"))));""}
    "store"->{go(c,Intent(Intent.ACTION_VIEW,Uri.parse("https://play.google.com/store/search?q="+Uri.encode(a.optString("q"))+"&c=apps")));""}
-   "click"->{if(s==null)NEED else if(s.clickText(a.optString("text")))" " else" Não encontrei o botão."}
-   "type"->{if(s==null)NEED else if(s.typeText(a.optString("text")))" " else" Não encontrei um campo de texto."}
+   "click"->{if(s==null)NEED else if(s.clickText(a.optString("text")))" " else " Não encontrei o botão."}
+   "type"->{if(s==null)NEED else if(s.typeText(a.optString("text")))" " else " Não encontrei um campo de texto."}
    "swipe"->{if(s==null)NEED else{s.swipe(a.optBoolean("down",true));""}}
    "make_site"->makeSite(c,a.optString("prompt"))
    "flash"->{flash(c,a.optBoolean("on",true));""}
@@ -59,7 +59,7 @@ object Actions{
    else->""
   }
  }
- private fun openApp(c:Context,name:String):String{val n=norm(name);val pm=c.packageManager;val list=pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),0);val hit=list.firstOrNull{norm(it.loadLabel(pm).toString()).contains(n)}?:return" Não achei o app "+name+".";go(c,pm.getLaunchIntentForPackage(hit.activityInfo.packageName)?:return" Não consegui abrir.");return""}
+ private fun openApp(c:Context,name:String):String{val n=norm(name);val pm=c.packageManager;val list=pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),0);val hit=list.firstOrNull{norm(it.loadLabel(pm).toString()).contains(n)}?:return " Não achei o app "+name+".";go(c,pm.getLaunchIntentForPackage(hit.activityInfo.packageName)?:return " Não consegui abrir.");return ""}
  private fun flash(c:Context,on:Boolean){val cm=c.getSystemService(Context.CAMERA_SERVICE) as CameraManager;val id=cm.cameraIdList.firstOrNull{cm.getCameraCharacteristics(it).get(CameraCharacteristics.FLASH_INFO_AVAILABLE)==true}?:return;cm.setTorchMode(id,on)}
- private fun makeSite(c:Context,prompt:String):String{val dir=java.io.File(c.filesDir,"sites").apply{mkdirs()};val f=java.io.File(dir,"site.html");val safe=prompt.replace("<","&lt;").replace(">","&gt;");f.writeText("<!doctype html><html><meta name='viewport' content='width=device-width,initial-scale=1'><body style='font-family:sans-serif;background:#0b0b0f;color:white;padding:28px'><h1>Site criado pelo JARVIS</h1><p>"+safe+"</p><button>Começar</button></body></html>");go(c,Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse("file://"+f.absolutePath),"text/html").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));return" Site criado no armazenamento do Jarvis."}
+ private fun makeSite(c:Context,prompt:String):String{val dir=java.io.File(c.filesDir,"sites").apply{mkdirs()};val f=java.io.File(dir,"site.html");val safe=prompt.replace("<","&lt;").replace(">","&gt;");f.writeText("<!doctype html><html><meta name='viewport' content='width=device-width,initial-scale=1'><body style='font-family:sans-serif;background:#0b0b0f;color:white;padding:28px'><h1>Site criado pelo JARVIS</h1><p>"+safe+"</p><button>Começar</button></body></html>");go(c,Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse("file://"+f.absolutePath),"text/html").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));return " Site criado no armazenamento do Jarvis."}
 }
