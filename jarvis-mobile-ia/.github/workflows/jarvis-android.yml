@@ -5,7 +5,10 @@ on:
   push:
     paths:
       - 'jarvis-mobile-ia/**'
-      - '.github/workflows/jarvis-android.yml'
+      - 'jarvis-mobile-ia/.github/workflows/jarvis-android.yml'
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -13,6 +16,7 @@ jobs:
     defaults:
       run:
         working-directory: jarvis-mobile-ia
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,22 +26,28 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
       - name: Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
-      - name: Gradle
+      - name: Install Android SDK 34
+        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Gradle 8.7
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.10.2'
+          gradle-version: '8.7'
+
+      - name: Verify Gradle
+        run: gradle --version
 
       - name: Build APK
-        run: gradle assembleDebug --no-daemon
+        run: gradle clean assembleDebug --no-daemon --stacktrace
 
       - name: Publish APK
         uses: actions/upload-artifact@v4
         with:
           name: jarvis-mobile-ia-debug
-          path: jarvis-mobile-ia/app/build/outputs/apk/debug/*.apk
+          path: jarvis-mobile-ia/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
