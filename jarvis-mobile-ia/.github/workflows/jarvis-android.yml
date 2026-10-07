@@ -29,7 +29,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: jarvis-mobile-ia-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: jarvis-mobile-ia/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
 # verified build 2
