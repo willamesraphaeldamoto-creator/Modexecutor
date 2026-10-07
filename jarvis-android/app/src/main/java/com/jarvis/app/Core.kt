@@ -25,14 +25,14 @@ object Rules{
   if(has("lanterna","flash")&&!has("desligar"))return"Lanterna." to arr(a("flash","on" to true));if(has("desligar lanterna"))return"Lanterna desligada." to arr(a("flash","on" to false))
   if(has("aumentar volume","sobe o volume","volume mais"))return"" to arr(a("volume","dir" to "up"));if(has("diminuir volume","abaixar volume","volume menos"))return"" to arr(a("volume","dir" to "down"))
   if(has("próxima música","proxima musica","próxima faixa"))return"" to arr(a("media","key" to "next"));if(has("música anterior","musica anterior"))return"" to arr(a("media","key" to "prev"))
-  Regex("""(?:abra|abrir|abre|inicie|iniciar)s+(?:os+|as+)?(.+)""").find(t)?.let{return"Abrindo." to arr(a("open_app","app" to it.groupValues[1]))}
-  Regex("""(?:pesquise|pesquisar|pesquisa|buscar|busque)s+(?:pors+|sobres+)?(.+)""").find(t)?.let{return"Pesquisando." to arr(a("search","q" to it.groupValues[1]))}
-  Regex("""(?:clique|clicar|toque|tocar)s+(?:ems+)?(.+)""").find(t)?.let{return"Clicando." to arr(a("click","text" to it.groupValues[1]))}
-  Regex("""(?:digite|escreva)s+(.+)""").find(t)?.let{return"Digitando." to arr(a("type","text" to it.groupValues[1]))}
+  Regex("""(?:abra|abrir|abre|inicie|iniciar)\\s+(?:o\\s+|a\\s+)?(.+)""").find(t)?.let{return"Abrindo." to arr(a("open_app","app" to it.groupValues[1]))}
+  Regex("""(?:pesquise|pesquisar|pesquisa|buscar|busque)\\s+(?:por\\s+|sobre\\s+)?(.+)""").find(t)?.let{return"Pesquisando." to arr(a("search","q" to it.groupValues[1]))}
+  Regex("""(?:clique|clicar|toque|tocar)\\s+(?:em\\s+)?(.+)""").find(t)?.let{return"Clicando." to arr(a("click","text" to it.groupValues[1]))}
+  Regex("""(?:digite|escreva)\\s+(.+)""").find(t)?.let{return"Digitando." to arr(a("type","text" to it.groupValues[1]))}
   if(has("role para baixo","rolar para baixo","desça a tela"))return"" to arr(a("swipe","down" to true));if(has("role para cima","rolar para cima","suba a tela"))return"" to arr(a("swipe","down" to false))
-  Regex("""(?:abra o site|abrir site|acesse)s+(.+)""").find(t)?.let{val x=it.groupValues[1];val u=if(x.startsWith("http"))x else "https://"+x;return"Abrindo o site." to arr(a("url","url" to u))}
-  Regex("""(?:crie|criar|gere|gerar)s+(?:ums+)?sites+(.+)""").find(t)?.let{return"Vou preparar um site web para você." to arr(a("make_site","prompt" to it.groupValues[1]))}
-  Regex("""(?:abra|abrir)s+(?:as+)?lojas+(.+)""").find(t)?.let{return"Abrindo a loja para procurar o app." to arr(a("store","q" to it.groupValues[1]))}
+  Regex("""(?:abra o site|abrir site|acesse)\\s+(.+)""").find(t)?.let{val x=it.groupValues[1];val u=if(x.startsWith("http"))x else "https://"+x;return"Abrindo o site." to arr(a("url","url" to u))}
+  Regex("""(?:crie|criar|gere|gerar)\\s+(?:um\\s+)?site\\s+(.+)""").find(t)?.let{return"Vou preparar um site web para você." to arr(a("make_site","prompt" to it.groupValues[1]))}
+  Regex("""(?:abra|abrir)\\s+(?:a\\s+)?loja\\s+(.+)""").find(t)?.let{return"Abrindo a loja para procurar o app." to arr(a("store","q" to it.groupValues[1]))}
   return null
  }
 }
