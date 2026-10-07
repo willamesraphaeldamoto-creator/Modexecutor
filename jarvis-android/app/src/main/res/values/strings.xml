@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Jarvis</string>
+    <string name="a11y_desc">Permite ao Jarvis tocar, rolar, digitar e navegar no celular por comando de voz.</string>
+</resources>
