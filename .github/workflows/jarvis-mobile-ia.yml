@@ -32,20 +32,19 @@ jobs:
 
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Instalar SDK Android 34
-        run: |
-          sdkmanager "platform-tools"
-          sdkmanager "platforms;android-34"
-          sdkmanager "build-tools;34.0.0"
+        with:
+          packages: "platform-tools platforms;android-34 build-tools;34.0.0"
 
       - name: Configurar Gradle 8.7
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.7"
 
-      - name: Verificar Gradle
-        run: gradle --version
+      - name: Verificar ambiente
+        run: |
+          java -version
+          gradle --version
+          sdkmanager --list_installed | grep -E "platforms;android-34|build-tools;34.0.0|platform-tools" || true
 
       - name: Compilar APK Debug
         run: gradle clean assembleDebug --no-daemon --stacktrace
