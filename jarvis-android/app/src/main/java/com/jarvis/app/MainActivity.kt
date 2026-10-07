@@ -1,299 +1,55 @@
 package com.jarvis.app
 
 import android.Manifest
-import android.app.Activity
-import android.content.Intent
+import android.app.*
+import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.media.projection.MediaProjectionManager
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.provider.OpenableColumns
+import android.os.*
 import android.provider.Settings
-import android.text.method.PasswordTransformationMethod
+import android.view.Gravity
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.TextView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import android.widget.*
+import kotlinx.coroutines.*
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
 class MainActivity : Activity() {
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private val fields = ArrayList<Pair<EditText, String>>()
-    private lateinit var out: TextView
-    private lateinit var prog: TextView
-    private lateinit var modeBtn: Button
-    private lateinit var wakeBtn: Button
-    private lateinit var voice: Voice
-    private lateinit var ls: Listener
+    private val scope=CoroutineScope(Dispatchers.Main+SupervisorJob())
+    private lateinit var voice:Voice; private lateinit var listener:Listener
+    private lateinit var chat:LinearLayout; private lateinit var input:EditText
+    private lateinit var scroll:ScrollView; private lateinit var status:TextView
+    private var sharing=false; private val REQ_SCREEN=909
 
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+    private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
+    private fun tv(t:String,size:Float,color:Int)=TextView(this).apply{ text=t;textSize=size;setTextColor(color);setPadding(dp(8),dp(8),dp(8),dp(8))}
+    private fun button(t:String,f:()->Unit)=Button(this).apply{text=t;isAllCaps=false;setOnClickListener{f()}}
 
-    private fun btn(t: String, f: () -> Unit): Button {
-        val b = Button(this)
-        b.text = t
-        b.isAllCaps = false
-        b.setOnClickListener { f() }
-        return b
+    override fun onCreate(b:Bundle?){super.onCreate(b);voice=Voice(this);listener=Listener(this);buildUi()}
+    private fun buildUi(){
+        val root=LinearLayout(this);root.orientation=LinearLayout.VERTICAL;root.setBackgroundColor(0xFF0B0B0F.toInt())
+        val top=LinearLayout(this);top.gravity=Gravity.CENTER_VERTICAL;top.setPadding(dp(12),dp(8),dp(12),dp(8))
+        top.addView(tv("☰",25,Color.WHITE));top.addView(tv("JARVIS",20,0xFFEDEDED.toInt()),LinearLayout.LayoutParams(0,dp(55),1f))
+        top.addView(button("⚙"){settings()},LinearLayout.LayoutParams(dp(55),dp(55)));root.addView(top)
+        status=tv("Online • pronto",12,0xFF8E8E93.toInt());status.gravity=Gravity.CENTER;root.addView(status)
+        scroll=ScrollView(this);chat=LinearLayout(this);chat.orientation=LinearLayout.VERTICAL;chat.setPadding(dp(12),dp(10),dp(12),dp(20));scroll.addView(chat);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+        addBubble("Olá! Eu sou o Jarvis. Posso conversar e, com a Acessibilidade ativada, abrir apps, tocar, digitar, clicar e rolar no celular.",false)
+        val tools=LinearLayout(this);tools.setPadding(dp(8),dp(4),dp(8),dp(4))
+        tools.addView(button("＋"){pickModel()});tools.addView(button("🖥 Tela"){screenShare()});tools.addView(button("🎤"){talk()},LinearLayout.LayoutParams(dp(90),dp(55)));root.addView(tools)
+        val bar=LinearLayout(this);bar.setPadding(dp(8),dp(4),dp(8),dp(10));input=EditText(this);input.hint="Pergunte ao Jarvis…";input.setTextColor(Color.WHITE);input.setHintTextColor(0xFF77777D.toInt());bar.addView(input,LinearLayout.LayoutParams(0,dp(58),1f));bar.addView(button("➤"){send()},LinearLayout.LayoutParams(dp(65),dp(58)));root.addView(bar)
+        setContentView(root)
     }
-
-    private fun label(t: String): TextView {
-        val v = TextView(this)
-        v.text = t
-        v.setTextColor(0xFF7DD3FC.toInt())
-        v.textSize = 14f
-        v.setPadding(0, dp(16), 0, dp(4))
-        return v
-    }
-
-    private fun edit(hintText: String, key: String, def: String = "", pw: Boolean = false): EditText {
-        val e = EditText(this)
-        e.hint = hintText
-        e.setText(Store.get(this, key, def))
-        e.setTextColor(Color.WHITE)
-        e.setHintTextColor(0xFF64748B.toInt())
-        e.textSize = 13f
-        e.setSingleLine()
-        if (pw) e.transformationMethod = PasswordTransformationMethod.getInstance()
-        fields.add(e to key)
-        return e
-    }
-
-    private fun go(i: Intent) {
-        try { startActivity(i) } catch (e: Exception) {
-            try { startActivity(Intent(Settings.ACTION_SETTINGS)) } catch (_: Exception) {}
-        }
-    }
-
-    override fun onCreate(b: Bundle?) {
-        super.onCreate(b)
-        voice = Voice(this)
-        ls = Listener(this)
-        val col = LinearLayout(this)
-        col.orientation = LinearLayout.VERTICAL
-        col.setPadding(dp(16), dp(28), dp(16), dp(40))
-        val sv = ScrollView(this)
-        sv.setBackgroundColor(0xFF0B1220.toInt())
-        sv.addView(col)
-        fun add(v: View) = col.addView(v)
-
-        val title = TextView(this)
-        title.text = "J.A.R.V.I.S"
-        title.textSize = 30f
-        title.setTextColor(0xFF38BDF8.toInt())
-        add(title)
-
-        add(label("Configuração (faça na ordem)"))
-        add(btn("1. Permissões (microfone, contatos, ligações)") { perms() })
-        add(btn("2. Ativar Acessibilidade (automação)") { go(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) })
-        add(btn("3. Permitir sobrepor outros apps") {
-            go(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
-        })
-        add(btn("4. Definir como assistente padrão (botão)") { go(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS)) })
-        add(btn("5. Sem restrição de bateria") { go(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) })
-        wakeBtn = btn("") { toggleWake() }
-        add(wakeBtn)
-
-        add(label("OpenRouter (modelos NVIDIA free)"))
-        add(edit("Chave sk-or-...", Store.KEY, pw = true))
-        add(edit("Modelos separados por vírgula (tenta em ordem)", Store.MODEL, Store.DEF_MODEL))
-        modeBtn = btn("") {
-            val m = listOf("auto", "openrouter", "local")
-            Store.set(this, Store.MODE, m[(m.indexOf(Store.get(this, Store.MODE, "auto")) + 1) % 3])
-            refresh()
-        }
-        add(modeBtn)
-
-        add(label("Modelo local (MediaPipe .task)"))
-        add(edit("URL do modelo (.task)", Store.LOCAL_URL, Store.DEF_URL))
-        add(edit("Token HuggingFace (só se o modelo exigir)", Store.HF, pw = true))
-        add(btn("Baixar modelo") { download() })
-        add(btn("Escolher arquivo já baixado") { pick() })
-        prog = TextView(this)
-        prog.setTextColor(Color.LTGRAY)
-        prog.text = if (Store.get(this, Store.LOCAL_PATH).isBlank()) "Nenhum modelo local." else "Modelo local pronto."
-        add(prog)
-
-        add(label("Conversar / testar comandos"))
-        val inp = EditText(this)
-        inp.hint = "Ex: abrir whatsapp"
-        inp.setTextColor(Color.WHITE)
-        inp.setHintTextColor(0xFF64748B.toInt())
-        add(inp)
-        add(btn("Enviar") { send(inp.text.toString()); inp.setText("") })
-        add(btn("🎤 Falar agora") { talk() })
-        out = TextView(this)
-        out.setTextColor(Color.WHITE)
-        out.textSize = 15f
-        out.setPadding(0, dp(12), 0, 0)
-        add(out)
-
-        setContentView(sv)
-        refresh()
-    }
-
-    private fun refresh() {
-        wakeBtn.text = if (Store.get(this, "wake") == "1") "⏹ Desligar escuta \"Jarvis\"" else "▶ Ligar escuta \"Jarvis\""
-        modeBtn.text = "IA: " + when (Store.get(this, Store.MODE, "auto")) {
-            "openrouter" -> "só OpenRouter (NVIDIA)"
-            "local" -> "só modelo local"
-            else -> "automático (online=OpenRouter, offline=local)"
-        }
-    }
-
-    private fun saveFields() {
-        fields.forEach { Store.set(this, it.second, it.first.text.toString().trim()) }
-    }
-
-    override fun onPause() { saveFields(); super.onPause() }
-    override fun onResume() { super.onResume(); refresh() }
-
-    override fun onDestroy() {
-        scope.cancel()
-        ls.stop()
-        voice.shutdown()
-        super.onDestroy()
-    }
-
-    private fun perms() {
-        val l = mutableListOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.CALL_PHONE, Manifest.permission.READ_CONTACTS)
-        if (Build.VERSION.SDK_INT >= 33) l.add(Manifest.permission.POST_NOTIFICATIONS)
-        requestPermissions(l.toTypedArray(), 1)
-    }
-
-    private fun toggleWake() {
-        val on = Store.get(this, "wake") == "1"
-        if (!on) {
-            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) { perms(); return }
-            startForegroundService(Intent(this, WakeService::class.java))
-            Store.set(this, "wake", "1")
-        } else {
-            stopService(Intent(this, WakeService::class.java))
-            Store.set(this, "wake", "0")
-        }
-        refresh()
-    }
-
-    private fun send(t: String) {
-        if (t.isBlank()) return
-        saveFields()
-        out.text = "Você: $t\n…"
-        scope.launch {
-            val r = try { Jarvis.handle(this@MainActivity, t) } catch (e: Exception) { "Erro: \${e.message}" }
-            out.text = "Você: $t\nJarvis: $r"
-            voice.say(r)
-        }
-    }
-
-    private fun talk() {
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) { perms(); return }
-        WakeService.pause()
-        out.text = "Ouvindo…"
-        ls.start(
-            onFinal = { WakeService.resume(); send(it) },
-            onFail = { WakeService.resume(); out.text = "Não ouvi (erro $it)" },
-            onPartial = { out.text = it }
-        )
-    }
-
-    private fun ui(s: String) = runOnUiThread { prog.text = s }
-
-    private fun openFollow(url: String, tok: String): HttpURLConnection {
-        var u = URL(url)
-        repeat(6) {
-            val cn = u.openConnection() as HttpURLConnection
-            cn.instanceFollowRedirects = false
-            cn.connectTimeout = 20000
-            cn.readTimeout = 30000
-            if (tok.isNotBlank() && u.host.endsWith("huggingface.co")) cn.setRequestProperty("Authorization", "Bearer $tok")
-            val code = cn.responseCode
-            if (code in 300..399) {
-                u = URL(u, cn.getHeaderField("Location"))
-                cn.disconnect()
-            } else if (code in 200..299) {
-                return cn
-            } else {
-                throw Exception("HTTP $code (o modelo exige token?)")
-            }
-        }
-        throw Exception("Redirecionamentos demais")
-    }
-
-    private fun download() {
-        saveFields()
-        val url = Store.get(this, Store.LOCAL_URL, Store.DEF_URL).ifBlank { Store.DEF_URL }.trim()
-        val tok = Store.get(this, Store.HF)
-        val name = url.substringAfterLast('/').substringBefore('?').ifBlank { "model.task" }
-        val dir = File(filesDir, "models").apply { mkdirs() }
-        val dest = File(dir, name)
-        ui("Conectando…")
-        Thread {
-            try {
-                val cn = openFollow(url, tok)
-                val total = cn.contentLengthLong
-                val part = File(dir, "$name.part")
-                var got = 0L
-                var last = 0L
-                cn.inputStream.use { i ->
-                    part.outputStream().use { o ->
-                        val buf = ByteArray(65536)
-                        while (true) {
-                            val r = i.read(buf)
-                            if (r < 0) break
-                            o.write(buf, 0, r)
-                            got += r
-                            if (got - last > 2_000_000) {
-                                last = got
-                                ui("Baixando… \${got / 1_000_000} MB" + if (total > 0) " / \${total / 1_000_000} MB" else "")
-                            }
-                        }
-                    }
-                }
-                dest.delete()
-                part.renameTo(dest)
-                Store.set(this, Store.LOCAL_PATH, dest.absolutePath)
-                ui("Modelo pronto: $name")
-            } catch (e: Exception) {
-                ui("Falha no download: \${e.message}")
-            }
-        }.start()
-    }
-
-    private fun pick() {
-        val i = Intent(Intent.ACTION_OPEN_DOCUMENT)
-        i.type = "*/*"
-        i.addCategory(Intent.CATEGORY_OPENABLE)
-        startActivityForResult(i, 7)
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(rc: Int, res: Int, d: Intent?) {
-        super.onActivityResult(rc, res, d)
-        if (rc != 7) return
-        val uri = d?.data ?: return
-        ui("Copiando modelo…")
-        Thread {
-            try {
-                val name = contentResolver.query(uri, null, null, null, null)?.use {
-                    if (it.moveToFirst()) it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)) else null
-                } ?: "model.task"
-                val dir = File(filesDir, "models").apply { mkdirs() }
-                val dest = File(dir, name)
-                contentResolver.openInputStream(uri)!!.use { i -> dest.outputStream().use { o -> i.copyTo(o) } }
-                Store.set(this, Store.LOCAL_PATH, dest.absolutePath)
-                ui("Modelo pronto: $name")
-            } catch (e: Exception) {
-                ui("Falha ao copiar: \${e.message}")
-            }
-        }.start()
-    }
+    private fun addBubble(text:String,user:Boolean){val v=tv(text,15,0xFFF1F1F3.toInt());v.setBackgroundColor(if(user)0xFF2A2A2F.toInt() else 0xFF15151A.toInt());v.setPadding(dp(14),dp(12),dp(14),dp(12));val p=LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(5),0,dp(5));chat.addView(v,p);scroll.post{scroll.fullScroll(View.FOCUS_DOWN)}}
+    private fun send(){val t=input.text.toString().trim();if(t.isBlank())return;input.setText("");addBubble(t,true);status.text="Pensando…";scope.launch{val r=try{Jarvis.handle(this@MainActivity,t)}catch(e:Exception){"Erro: ${e.message}"};addBubble(r,false);status.text="Online • pronto";voice.say(r)}}
+    private fun talk(){if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO),2);return};status.text="Ouvindo…";listener.start({t->status.text="Online • pronto";addBubble(t,true);scope.launch{val r=Jarvis.handle(this@MainActivity,t);addBubble(r,false);voice.say(r)}},{status.text="Microfone indisponível"},{p->status.text="Ouvindo: $p"})}
+    private fun screenShare(){if(sharing){stopService(Intent(this,ScreenShareService::class.java));sharing=false;status.text="Compartilhamento parado";return};val m=getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager;startActivityForResult(m.createScreenCaptureIntent(),REQ_SCREEN)}
+    @Deprecated("Deprecated") override fun onActivityResult(r:Int,c:Int,d:Intent?){super.onActivityResult(r,c,d);if(r==REQ_SCREEN&&c==RESULT_OK&&d!=null){startForegroundService(Intent(this,ScreenShareService::class.java).putExtra("result",c).putExtra("data",d));sharing=true;status.text="Tela compartilhada com o Jarvis"}else if(r==7&&c==RESULT_OK&&d?.data!=null){copyModel(d.data!!)}}
+    private fun settings(){val items=arrayOf("Permissões","Acessibilidade / controle do celular","Assistente padrão","Sobrepor outros apps","Bateria sem restrição","Configurar IA / modelo");AlertDialog.Builder(this).setTitle("JARVIS").setItems(items){_,w->when(w){0->requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO,Manifest.permission.READ_CONTACTS,Manifest.permission.CALL_PHONE),1);1->startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));2->startActivity(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS));3->startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,Uri.parse("package:$packageName")));4->startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));5->pickModel()}}.show()}
+    private fun pickModel(){val url=EditText(this);url.hint="URL do modelo .task";url.setText(Store.get(this,Store.LOCAL_URL,Store.DEF_URL));AlertDialog.Builder(this).setTitle("Modelo local").setMessage("Baixe o modelo no celular ou escolha um arquivo .task já baixado.").setView(url).setPositiveButton("Baixar"){_->Store.set(this,Store.LOCAL_URL,url.text.toString());download(url.text.toString())}.setNeutralButton("Escolher arquivo"){_->startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE),7)}.setNegativeButton("Cancelar",null).show()}
+    private fun download(u:String){status.text="Baixando modelo…";Thread{try{val cn=URL(u).openConnection() as HttpURLConnection;cn.connectTimeout=20000;cn.readTimeout=60000;val name=URL(u).path.substringAfterLast('/').ifBlank{"model.task"};val dir=File(filesDir,"models").apply{mkdirs()};val f=File(dir,name);cn.inputStream.use{a->f.outputStream().use{b->a.copyTo(b)}};Store.set(this,Store.LOCAL_PATH,f.absolutePath);runOnUiThread{status.text="Modelo baixado ✓"}}catch(e:Exception){runOnUiThread{status.text="Erro: ${e.message}"}}}.start()}
+    private fun copyModel(uri:Uri){Thread{try{val dir=File(filesDir,"models").apply{mkdirs()};val f=File(dir,"model.task");contentResolver.openInputStream(uri)!!.use{a->f.outputStream().use{b->a.copyTo(b)}};Store.set(this,Store.LOCAL_PATH,f.absolutePath);runOnUiThread{status.text="Modelo local pronto ✓"}}catch(e:Exception){runOnUiThread{status.text="Erro: ${e.message}"}}}.start()}
+    override fun onDestroy(){scope.cancel();listener.stop();voice.shutdown();if(sharing)stopService(Intent(this,ScreenShareService::class.java));super.onDestroy()}
 }
