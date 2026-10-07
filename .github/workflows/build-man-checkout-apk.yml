@@ -1,0 +1,41 @@
+name: Build Man Checkout APK
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "man-checkout/**"
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: man-checkout
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: man-checkout/package-lock.json
+      - name: Install dependencies
+        run: npm install
+      - name: Generate app icon
+        run: |
+          npm install --no-save sharp
+          node -e "require('sharp')('assets/logo.svg').resize(1024,1024).png().toFile('assets/icon.png')"
+      - name: Expo prebuild
+        run: npx expo prebuild --platform android --non-interactive
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+      - name: Verify APK
+        run: test -f android/app/build/outputs/apk/release/app-release.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: man-checkout-apk
+          path: man-checkout/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
