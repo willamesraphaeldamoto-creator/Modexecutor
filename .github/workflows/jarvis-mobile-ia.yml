@@ -1,63 +1,18 @@
 name: Build JARVIS Mobile IA
-
-on:
-  workflow_dispatch:
-  push:
-    paths:
-      - "jarvis-mobile-ia/**"
-      - ".github/workflows/jarvis-mobile-ia.yml"
-
-permissions:
-  contents: read
-
+on: {workflow_dispatch: null, push: {paths: ["jarvis-mobile-ia/**", ".github/workflows/jarvis-mobile-ia.yml"]}}
+permissions: {contents: read}
 jobs:
-  build:
-    name: Compilar APK JARVIS
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: jarvis-mobile-ia
-
-    steps:
-      - name: Baixar código
-        uses: actions/checkout@v4
-
-      - name: Configurar Java 17
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: "platform-tools platforms;android-34 build-tools;34.0.0"
-
-      - name: Configurar Gradle 8.7
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.7"
-
-      - name: Verificar ambiente
-        run: |
-          java -version
-          gradle --version
-          sdkmanager --list_installed | grep -E "platforms;android-34|build-tools;34.0.0|platform-tools" || true
-
-      - name: Compilar APK Debug
-        run: gradle clean assembleDebug --no-daemon --stacktrace
-
-      - name: Verificar APK
-        run: |
-          ls -lh app/build/outputs/apk/debug/
-          test -f app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Publicar APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: JARVIS-Mobile-IA-APK
-          path: jarvis-mobile-ia/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 30
+ build:
+  runs-on: ubuntu-latest
+  defaults: {run: {working-directory: jarvis-mobile-ia}}
+  steps:
+  - uses: actions/checkout@v4
+  - uses: actions/setup-java@v5
+    with: {distribution: temurin, java-version: "17", cache: gradle}
+  - uses: android-actions/setup-android@v3
+    with: {packages: "platform-tools platforms;android-35 build-tools;35.0.0"}
+  - uses: gradle/actions/setup-gradle@v4
+    with: {gradle-version: "8.9"}
+  - run: gradle clean assembleDebug --no-daemon --stacktrace
+  - uses: actions/upload-artifact@v4
+    with: {name: JARVIS-Mobile-IA-APK, path: app/build/outputs/apk/debug/app-debug.apk, if-no-files-found: error, retention-days: 30}
