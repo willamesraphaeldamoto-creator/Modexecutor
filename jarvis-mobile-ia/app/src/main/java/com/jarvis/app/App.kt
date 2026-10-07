@@ -122,9 +122,9 @@ object Rules{
         val t=raw.lowercase().trim();fun has(vararg x:String)=x.any{t.contains(it)}
         if(has("lanterna"))return(if(has("deslig","apaga"))"Lanterna desligada." else "Lanterna ligada.") to arr(a("flash","on" to !has("deslig","apaga")))
         if(has("volume"))return(if(has("aument","subir","mais","alto"))"Volume aumentado." else "Volume diminuído.") to arr(a("volume","dir" to if(has("aument","subir","mais","alto"))"up" else "down"))
-        if(t=="voltar")return"Voltando." to arr(a("back"));if(t=="início"||t=="inicio"||t=="home")return"Tela inicial." to arr(a("home"))
-        if(has("recentes"))return"Apps recentes." to arr(a("recents"));if(has("notificações","notificacoes"))return"Abrindo notificações." to arr(a("notifications"))
-        if(has("ler a tela","o que tem na tela","ler tela"))return"" to arr(a("read_screen"))
+        if(t=="voltar")return "Voltando." to arr(a("back"));if(t=="início"||t=="inicio"||t=="home")return "Tela inicial." to arr(a("home"))
+        if(has("recentes"))return "Apps recentes." to arr(a("recents"));if(has("notificações","notificacoes"))return "Abrindo notificações." to arr(a("notifications"))
+        if(has("ler a tela","o que tem na tela","ler tela"))return "" to arr(a("read_screen"))
         if(t.startsWith("abra ")||t.startsWith("abrir ")||t.startsWith("abre ")){val q=t.substringAfter(" ").trim();if(q.isNotBlank())return "Abrindo." to arr(a("open_app","app" to q))}
         if(t.startsWith("pesquise ")||t.startsWith("pesquisa ")||t.startsWith("buscar ")||t.startsWith("procure ")){val q=t.substringAfter(" ").trim();if(q.isNotBlank())return "Pesquisando." to arr(a("search","q" to q))}
         return null
