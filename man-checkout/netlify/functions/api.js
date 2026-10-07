@@ -1,0 +1,8 @@
+exports.handler=async(event)=>{const headers={"Content-Type":"application/json","Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"Content-Type"};if(event.httpMethod==="OPTIONS")return{statusCode:204,headers,body:""};try{const body=JSON.parse(event.body||"{}");const p=event.path||"";let url="",h={"Content-Type":"application/json"},payload=body;
+if(p.endsWith("/krypt/pix-create"))url="https://kryptgateway.netlify.app/api/gateway/pix-create";
+else if(p.endsWith("/krypt/crypto-create"))url="https://kryptgateway.netlify.app/api/gateway/crypto-create";
+else if(p.endsWith("/krypt/cashout"))url="https://kryptgateway.netlify.app/api/merchant/cashout";
+else if(p.endsWith("/abacate/billing-create")){url=(process.env.ABACATE_API_BASE||"https://api.abacatepay.com/v1")+"/billing/create";h.Authorization="Bearer "+process.env.ABACATE_API_KEY;payload={frequency:"ONE_TIME",methods:["PIX"],products:[{externalId:"man-checkout",name:body.name||"Produto",description:body.description||"",quantity:1,price:Number(body.price||0)}],returnUrl:body.returnUrl,completionUrl:body.completionUrl};}
+else return{statusCode:404,headers,body:JSON.stringify({error:"Rota não encontrada"})};
+if(url.includes("kryptgateway")){h.ci=process.env.KRYPT_CI;h.cs=process.env.KRYPT_CS;}
+const r=await fetch(url,{method:"POST",headers:h,body:JSON.stringify(payload)});const text=await r.text();return{statusCode:r.status,headers,body:text};}catch(e){return{statusCode:500,headers,body:JSON.stringify({error:e.message})}}};
