@@ -1,4 +1,1 @@
-<resources>
-    <string name="app_name">JARVIS Mobile IA</string>
-    <string name="accessibility_description">Permite ao JARVIS executar ações de interface somente quando o usuário autorizar.</string>
-</resources>
+<resources><string name="app_name">JARVIS Mobile IA</string><string name="accessibility_description">Permite ao JARVIS tocar, rolar, digitar e navegar no celular quando o usuário autorizar.</string></resources>
