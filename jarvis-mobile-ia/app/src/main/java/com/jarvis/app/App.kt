@@ -125,8 +125,8 @@ object Rules{
         if(t=="voltar")return"Voltando." to arr(a("back"));if(t=="início"||t=="inicio"||t=="home")return"Tela inicial." to arr(a("home"))
         if(has("recentes"))return"Apps recentes." to arr(a("recents"));if(has("notificações","notificacoes"))return"Abrindo notificações." to arr(a("notifications"))
         if(has("ler a tela","o que tem na tela","ler tela"))return"" to arr(a("read_screen"))
-        Regex("""^(?:abra|abrir|abre)\s+(.+)$""").find(t)?.let{return"Abrindo." to arr(a("open_app","app" to it.groupValues[1]))}
-        Regex("""^(?:pesquise|pesquisa|buscar|procure)\s+(.+)$""").find(t)?.let{return"Pesquisando." to arr(a("search","q" to it.groupValues[1]))}
+        if(t.startsWith("abra ")||t.startsWith("abrir ")||t.startsWith("abre ")){val q=t.substringAfter(" ").trim();if(q.isNotBlank())return "Abrindo." to arr(a("open_app","app" to q))}
+        if(t.startsWith("pesquise ")||t.startsWith("pesquisa ")||t.startsWith("buscar ")||t.startsWith("procure ")){val q=t.substringAfter(" ").trim();if(q.isNotBlank())return "Pesquisando." to arr(a("search","q" to q))}
         return null
     }
 }
