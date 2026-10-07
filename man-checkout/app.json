@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Man Checkout",
+    "slug": "man-checkout",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "mancheckout",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
+    "android": { "package": "com.mancheckout.app", "versionCode": 1 },
+    "ios": { "bundleIdentifier": "com.mancheckout.app" },
+    "plugins": ["expo-image-picker", "expo-video"]
+  }
+}
