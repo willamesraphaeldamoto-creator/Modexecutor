@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111f"><title>Batimento Cardíaco</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#07111f;color:#fff;min-height:100vh}
+main{max-width:560px;margin:auto;padding:22px 18px 40px}.card{background:#101d30;border:1px solid #263852;border-radius:24px;padding:22px;margin-top:16px}
+h1{margin:0 0 6px;font-size:29px}.muted{color:#aab8cc}.heart{font-size:54px;text-align:center;margin:10px}.bpm{font-size:64px;font-weight:800;text-align:center;margin:4px}.unit{text-align:center;color:#aab8cc}
+button{width:100%;border:0;border-radius:16px;padding:16px;font-size:17px;font-weight:700;background:#e83d65;color:#fff;margin-top:15px}button:disabled{opacity:.5}
+video{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:20px;background:#000;display:none;transform:scaleX(-1)}
+#status{text-align:center;margin-top:12px;min-height:24px}.warning{font-size:13px;line-height:1.5;color:#cbd5e1;margin-top:18px}
+.badge{display:inline-block;padding:7px 11px;border-radius:999px;background:#1d2c43;color:#cbd5e1;font-size:13px;margin-top:10px}
+</style></head>
+<body><main>
+<h1>❤️ Batimento Cardíaco</h1><div class="muted">Estimativa de frequência cardíaca pela câmera.</div>
+<section class="card">
+<video id="cam" playsinline autoplay muted></video>
+<div id="heart" class="heart">❤️</div><div id="bpm" class="bpm">--</div><div class="unit">BPM</div>
+<div id="badge" class="badge">Aguardando medição</div>
+<button id="start">Iniciar medição</button><div id="status">Coloque a ponta do dedo sobre a câmera traseira.</div>
+</section>
+<section class="card warning"><b>Importante:</b> esta é apenas uma estimativa e não diagnostica se o coração está saudável. Não substitui avaliação médica. Se houver dor no peito, falta de ar intensa, desmaio ou outro sintoma grave, procure atendimento de emergência (SAMU 192 no Brasil).</section>
+</main>
+<script>
+const cam=document.getElementById('cam'),start=document.getElementById('start'),bpmEl=document.getElementById('bpm'),status=document.getElementById('status'),badge=document.getElementById('badge'),heart=document.getElementById('heart');
+let stream=null,timer=null,values=[],times=[];
+function mean(a){return a.reduce((x,y)=>x+y,0)/a.length}
+function estimate(){
+ if(values.length<8)return null;
+ const smooth=values.map((v,i)=>mean(values.slice(Math.max(0,i-2),i+3)));
+ let peaks=0,last=-99;
+ for(let i=1;i<smooth.length-1;i++){
+  if(smooth[i]>smooth[i-1]&&smooth[i]>=smooth[i+1]&&smooth[i]>mean(smooth)+1.5&&i-last>3){peaks++;last=i}
+ }
+ const sec=(times[times.length-1]-times[0])/1000;
+ return sec>5&&peaks>1?Math.round(peaks*60/sec):null;
+}
+async function startMeasure(){
+ try{
+  start.disabled=true; values=[];times=[];bpmEl.textContent='--';badge.textContent='Medindo...';
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:320},height:{ideal:320}},audio:false});
+  cam.srcObject=stream;cam.style.display='block';heart.style.display='none';
+  const c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});
+  status.textContent='Mantenha o dedo cobrindo a câmera por 20 segundos.';
+  const begin=Date.now();
+  timer=setInterval(()=>{
+   if(!cam.videoWidth)return;
+   c.width=80;c.height=80;x.drawImage(cam,0,0,80,80);const d=x.getImageData(0,0,80,80).data;
+   let r=0;for(let i=0;i<d.length;i+=4)r+=d[i];values.push(r/(d.length/4));times.push(Date.now());
+   const est=estimate();if(est){bpmEl.textContent=est;badge.textContent=est<50?'Frequência baixa':est>120?'Frequência alta':'Leitura em faixa comum';}
+   if(Date.now()-begin>=20000)finish();
+  },250);
+ }catch(e){status.textContent='Não foi possível acessar a câmera. Permita o acesso e tente novamente.';badge.textContent='Câmera não disponível';start.disabled=false}
+}
+function finish(){
+ clearInterval(timer);timer=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;cam.style.display='none';heart.style.display='block';start.disabled=false;
+ const est=estimate();if(est){bpmEl.textContent=est;status.textContent='Medição concluída.'}else{bpmEl.textContent='--';status.textContent='Sinal insuficiente. Tente novamente com o dedo cobrindo bem a câmera.';badge.textContent='Sem leitura'}
+}
+start.onclick=startMeasure;
+</script></body></html>
